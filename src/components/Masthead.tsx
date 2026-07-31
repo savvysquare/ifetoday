@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 const SOCIALS = ["WhatsApp", "Facebook", "Instagram", "X (Twitter)", "TikTok", "Website"];
 
-export function Masthead({ dateLine }: { dateLine?: string }) {
+export function Masthead({ dateLine }: { dateLine?: string | undefined }) {
   return (
     <header className="border-b border-ink/80 pb-4">
       <div className="flex flex-col items-center gap-1 pt-8">

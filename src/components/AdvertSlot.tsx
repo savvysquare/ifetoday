@@ -1,6 +1,6 @@
 import type { Advert } from "@/lib/news";
 
-export function AdvertSlot({ advert }: { advert?: Advert }) {
+export function AdvertSlot({ advert }: { advert?: Advert | undefined }) {
   const body = advert?.image_url ? (
     <img
       src={advert.image_url}

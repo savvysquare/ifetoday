@@ -77,16 +77,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Ife Today — The Voice of the Ancient City" },
+      {
+        name: "description",
+        content:
+          "Daily local, Osun State, national and global news for the people of Ile-Ife. Free forever.",
+      },
+      { name: "author", content: "Ife Today" },
+      { property: "og:title", content: "Ife Today — The Voice of the Ancient City" },
+      {
+        property: "og:description",
+        content: "Daily news for Ile-Ife: local, state, national and global. Free forever.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,

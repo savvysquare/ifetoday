@@ -368,7 +368,10 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
             <button
               className={btn}
               onClick={async () => {
-                if (!form.title.trim()) return toast.error("Headline is required");
+                if (!form.title.trim()) {
+                  toast.error("Headline is required");
+                  return;
+                }
                 try {
                   await saveArticleFn({
                     data: {
@@ -578,7 +581,10 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
           <button
             className={btn}
             onClick={async () => {
-              if (!statusForm.message.trim()) return toast.error("Message is required");
+              if (!statusForm.message.trim()) {
+                toast.error("Message is required");
+                return;
+              }
               await saveStatusFn({
                 data: {
                   id: statusForm.id,

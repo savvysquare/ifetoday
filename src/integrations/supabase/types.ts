@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      adverts: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          image_url: string | null
+          link_url: string | null
+          title: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          title?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      articles: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          dek: string | null
+          edition_date: string
+          id: string
+          image_url: string | null
+          is_breaking: boolean
+          is_lead: boolean
+          published: boolean
+          slug: string
+          sources: string[]
+          title: string
+        }
+        Insert: {
+          body?: string
+          category?: string
+          created_at?: string
+          dek?: string | null
+          edition_date?: string
+          id?: string
+          image_url?: string | null
+          is_breaking?: boolean
+          is_lead?: boolean
+          published?: boolean
+          slug: string
+          sources?: string[]
+          title: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          dek?: string | null
+          edition_date?: string
+          id?: string
+          image_url?: string | null
+          is_breaking?: boolean
+          is_lead?: boolean
+          published?: boolean
+          slug?: string
+          sources?: string[]
+          title?: string
+        }
+        Relationships: []
+      }
+      statuses: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          message: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          message: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

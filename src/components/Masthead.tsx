@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-const SOCIALS = ["WhatsApp", "Facebook", "Instagram", "X (Twitter)", "TikTok", "Website"];
+const SOCIALS = ["WhatsApp", "Facebook", "Instagram", "X (Twitter)", "TikTok"];
 
 export function Masthead({ dateLine }: { dateLine?: string | undefined }) {
   return (
@@ -10,7 +10,7 @@ export function Masthead({ dateLine }: { dateLine?: string | undefined }) {
           <span className="text-ink">Ife</span>
           <span className="text-brand">Today</span>
         </Link>
-        <p className="font-serif text-sm italic text-muted-foreground sm:text-base">
+        <p className="font-sans text-sm text-muted-foreground sm:text-base">
           The Voice of the Ancient City
         </p>
         <p className="mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
@@ -29,7 +29,7 @@ export function SiteFooter() {
         <span className="text-ink">Ife</span>
         <span className="text-brand">Today</span>
       </p>
-      <p className="mt-1 font-serif text-sm italic text-muted-foreground">
+      <p className="mt-1 font-sans text-sm text-muted-foreground">
         The Voice of the Ancient City
       </p>
       <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-3">
@@ -38,6 +38,15 @@ export function SiteFooter() {
             {s} — <span className="font-semibold text-brand">Coming Soon</span>
           </li>
         ))}
+        <li>
+          Website —{" "}
+          <a
+            href="https://www.ife.today"
+            className="font-semibold text-brand hover:underline"
+          >
+            www.ife.today
+          </a>
+        </li>
       </ul>
       <p className="mt-6 text-xs text-muted-foreground">
         © {new Date().getFullYear()} Ife Today. Free forever.

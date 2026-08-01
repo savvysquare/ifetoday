@@ -57,14 +57,12 @@ function LeadStory({ article }: { article: Article }) {
         </Link>
       )}
       <StoryMeta article={article} />
-      <h1 className="text-3xl sm:text-[2.75rem]">
+      <h1 className="masthead text-3xl sm:text-[2.75rem]">
         <Link to="/story/$slug" params={{ slug: article.slug }} className="hover:text-brand">
           {article.title}
         </Link>
       </h1>
-      {article.dek && (
-        <p className="mt-3 font-serif text-lg italic text-muted-foreground">{article.dek}</p>
-      )}
+      {article.dek && <p className="mt-3 font-sans text-lg text-muted-foreground">{article.dek}</p>}
       <p className="mt-4 text-base leading-relaxed text-foreground/90">
         {excerpt(article.body, 260)}
       </p>
@@ -85,7 +83,7 @@ function StoryRow({ article }: { article: Article }) {
       <StoryMeta article={article} />
       <div className="flex gap-4">
         <div className="flex-1">
-          <h2 className="text-xl sm:text-2xl">
+          <h2 className="masthead text-xl sm:text-2xl">
             <Link to="/story/$slug" params={{ slug: article.slug }} className="hover:text-brand">
               {article.title}
             </Link>

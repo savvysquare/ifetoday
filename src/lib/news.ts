@@ -27,6 +27,16 @@ export function formatEditionDate(date: string) {
   });
 }
 
+/** Today's date, formatted like an edition date line. */
+export function formatToday() {
+  return new Date().toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function excerpt(html: string, length = 180) {
   const text = html
     .replace(/<[^>]*>/g, " ")

@@ -53,9 +53,9 @@ function Story() {
           {article.is_breaking && <span className="text-brand">Breaking · </span>}
           {categoryLabel(article.category)} — {formatEditionDate(article.edition_date)}
         </p>
-        <h1 className="text-3xl sm:text-[2.5rem]">{article.title}</h1>
+        <h1 className="masthead text-3xl sm:text-[2.5rem]">{article.title}</h1>
         {article.dek && (
-          <p className="mt-3 font-serif text-lg italic text-muted-foreground">{article.dek}</p>
+          <p className="mt-3 font-sans text-lg text-muted-foreground">{article.dek}</p>
         )}
         {article.image_url && (
           <img src={article.image_url} alt={article.title} className="my-6 w-full object-cover" />

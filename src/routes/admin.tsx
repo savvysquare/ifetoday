@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import crown from "@/assets/ife-crown.png.asset.json";
 
 import { RichTextEditor, insertHtmlAtCursor } from "@/components/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";

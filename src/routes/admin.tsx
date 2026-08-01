@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import crown from "@/assets/ife-crown.png.asset.json";
 
 import { RichTextEditor, insertHtmlAtCursor } from "@/components/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,10 +84,13 @@ function Admin() {
   if (!authed) {
     return (
       <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-        <p className="masthead text-3xl">
-          <span className="text-ink">Ife</span>
-          <span className="text-brand">Today</span>
-        </p>
+        <div className="flex items-center gap-3">
+          <img src={crown.url} alt="Ife Today emblem" className="h-12 w-auto" />
+          <p className="masthead text-3xl">
+            <span className="text-ink">Ife</span>
+            <span className="text-brand">Today</span>
+          </p>
+        </div>
         <h1 className="mt-4 text-xl">Newsroom access</h1>
         <form
           className="mt-5 space-y-3"

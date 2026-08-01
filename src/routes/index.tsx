@@ -9,6 +9,7 @@ import {
   categoryLabel,
   excerpt,
   formatEditionDate,
+  formatToday,
   resolveMediaUrl,
   statusesQuery,
   type Article,
@@ -125,7 +126,7 @@ function Index() {
   const { data: statuses } = useSuspenseQuery(statusesQuery);
 
   const [lead, ...rest] = articles;
-  const latestDate = lead ? formatEditionDate(lead.edition_date) : undefined;
+  const latestDate = formatToday();
 
   return (
     <div className="mx-auto max-w-2xl px-5 pb-4">

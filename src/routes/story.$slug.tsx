@@ -9,6 +9,8 @@ import {
   categoryLabel,
   excerpt,
   formatEditionDate,
+  resolveBodyMediaUrls,
+  resolveMediaUrl,
 } from "@/lib/news";
 
 export const Route = createFileRoute("/story/$slug")({
@@ -44,6 +46,8 @@ function Story() {
 
   if (!article) return null;
 
+  const imageUrl = resolveMediaUrl(article.image_url);
+
   return (
     <div className="mx-auto max-w-2xl px-5 pb-4">
       <Masthead dateLine={formatEditionDate(article.edition_date)} />
@@ -57,12 +61,12 @@ function Story() {
         {article.dek && (
           <p className="mt-3 font-sans text-lg text-muted-foreground">{article.dek}</p>
         )}
-        {article.image_url && (
-          <img src={article.image_url} alt={article.title} className="my-6 w-full object-cover" />
+        {imageUrl && (
+          <img src={imageUrl} alt={article.title} className="my-6 w-full object-cover" />
         )}
         <div
           className="story-body mt-6"
-          dangerouslySetInnerHTML={{ __html: article.body }}
+          dangerouslySetInnerHTML={{ __html: resolveBodyMediaUrls(article.body) }}
         />
 
         {article.sources.length > 0 && (

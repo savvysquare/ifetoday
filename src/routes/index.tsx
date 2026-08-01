@@ -9,6 +9,7 @@ import {
   categoryLabel,
   excerpt,
   formatEditionDate,
+  resolveMediaUrl,
   statusesQuery,
   type Article,
 } from "@/lib/news";
@@ -49,11 +50,12 @@ function StoryMeta({ article }: { article: Article }) {
 }
 
 function LeadStory({ article }: { article: Article }) {
+  const imageUrl = resolveMediaUrl(article.image_url);
   return (
     <article className="pt-8">
-      {article.image_url && (
+      {imageUrl && (
         <Link to="/story/$slug" params={{ slug: article.slug }}>
-          <img src={article.image_url} alt={article.title} className="mb-6 w-full object-cover" />
+          <img src={imageUrl} alt={article.title} className="mb-6 w-full object-cover" />
         </Link>
       )}
       <StoryMeta article={article} />
@@ -78,6 +80,7 @@ function LeadStory({ article }: { article: Article }) {
 }
 
 function StoryRow({ article }: { article: Article }) {
+  const imageUrl = resolveMediaUrl(article.image_url);
   return (
     <article className="border-t border-border py-8">
       <StoryMeta article={article} />
@@ -102,13 +105,13 @@ function StoryRow({ article }: { article: Article }) {
             Continue reading
           </Link>
         </div>
-        {article.image_url && (
+        {imageUrl && (
           <Link
             to="/story/$slug"
             params={{ slug: article.slug }}
             className="hidden w-32 shrink-0 sm:block"
           >
-            <img src={article.image_url} alt={article.title} className="h-28 w-full object-cover" />
+            <img src={imageUrl} alt={article.title} className="h-28 w-full object-cover" />
           </Link>
         )}
       </div>

@@ -1,21 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+// This route previously proxied Supabase storage via a server handler.
+// In SPA mode there is no server, so media should be fetched directly
+// from Supabase public URLs.  This stub keeps the route tree valid so
+// that any old links don't cause a hard router crash.
 export const Route = createFileRoute("/api/public/media/$")({
-  server: {
-    handlers: {
-      GET: async ({ params }) => {
-        const path = params._splat;
-        if (!path || path.includes("..")) return new Response("Not found", { status: 404 });
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data, error } = await supabaseAdmin.storage.from("media").download(path);
-        if (error || !data) return new Response("Not found", { status: 404 });
-        return new Response(await data.arrayBuffer(), {
-          headers: {
-            "content-type": data.type || "application/octet-stream",
-            "cache-control": "public, max-age=31536000, immutable",
-          },
-        });
-      },
-    },
-  },
+  component: () => null,
 });

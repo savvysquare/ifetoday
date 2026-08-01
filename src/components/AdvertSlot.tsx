@@ -1,10 +1,11 @@
-import type { Advert } from "@/lib/news";
+import { resolveMediaUrl, type Advert } from "@/lib/news";
 
 export function AdvertSlot({ advert }: { advert?: Advert | undefined }) {
-  const body = advert?.image_url ? (
+  const imageUrl = resolveMediaUrl(advert?.image_url);
+  const body = imageUrl ? (
     <img
-      src={advert.image_url}
-      alt={advert.title ?? "Advertisement"}
+      src={imageUrl}
+      alt={advert?.title ?? "Advertisement"}
       className="w-full object-cover"
     />
   ) : (

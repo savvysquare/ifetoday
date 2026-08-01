@@ -35,6 +35,22 @@ export function excerpt(html: string, length = 180) {
   return text.length > length ? `${text.slice(0, length).trimEnd()}…` : text;
 }
 
+export function resolveMediaUrl(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("/api/public/media/")) {
+    const path = url.replace("/api/public/media/", "");
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://afcyzkilkigruadjpfqb.supabase.co";
+    return `${supabaseUrl}/storage/v1/object/public/media/${path}`;
+  }
+  return url;
+}
+
+export function resolveBodyMediaUrls(html: string): string {
+  if (!html) return html;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://afcyzkilkigruadjpfqb.supabase.co";
+  return html.replace(/\/api\/public\/media\//g, `${supabaseUrl}/storage/v1/object/public/media/`);
+}
+
 export const articlesQuery = queryOptions({
   queryKey: ["articles"],
   queryFn: async (): Promise<Article[]> => {

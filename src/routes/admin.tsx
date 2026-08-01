@@ -1,24 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { RichTextEditor, insertHtmlAtCursor } from "@/components/RichTextEditor";
-import {
-  adminListAll,
-  adminLogin,
-  adminLogout,
-  adminStatus,
-  deleteAdvert,
-  deleteArticle,
-  deleteStatus,
-  saveAdvert,
-  saveArticle,
-  saveStatus,
-  uploadImage,
-} from "@/lib/admin.functions";
-import { CATEGORIES } from "@/lib/news";
+import { supabase } from "@/integrations/supabase/client";
+import { CATEGORIES, resolveMediaUrl } from "@/lib/news";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -40,6 +27,25 @@ const btn =
   "border border-ink bg-ink px-4 py-2 text-xs font-bold uppercase tracking-[0.15em] text-background";
 const btnGhost =
   "border border-border px-3 py-1.5 text-[0.7rem] font-bold uppercase tracking-[0.15em]";
+
+const AUTH_KEY = "ife_admin_authenticated";
+
+function checkIsAuthed(): boolean {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(AUTH_KEY) === "true";
+}
+
+function slugify(title: string): string {
+  const base = title
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 70)
+    .replace(/-+$/, "");
+  return base || `story-${Date.now()}`;
+}
 
 type ArticleForm = {
   id: string | null;
@@ -69,25 +75,12 @@ const emptyArticle = (): ArticleForm => ({
   sources: "",
 });
 
-function readFile(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Could not read file"));
-    reader.readAsDataURL(file);
-  });
-}
-
 function Admin() {
-  const status = useServerFn(adminStatus);
-  const login = useServerFn(adminLogin);
-  const { data, refetch } = useQuery({ queryKey: ["admin-status"], queryFn: () => status({}) });
+  const [authed, setAuthed] = useState(checkIsAuthed);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
-  if (!data) return <div className="p-10 text-sm text-muted-foreground">Loading…</div>;
-
-  if (!data.authed) {
+  if (!authed) {
     return (
       <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
         <p className="masthead text-3xl">
@@ -97,16 +90,17 @@ function Admin() {
         <h1 className="mt-4 text-xl">Newsroom access</h1>
         <form
           className="mt-5 space-y-3"
-          onSubmit={async (e) => {
+          onSubmit={(e) => {
             e.preventDefault();
             setBusy(true);
-            const res = await login({ data: { password } });
-            setBusy(false);
-            if (res.ok) {
-              await refetch();
+            if (password === "IfeToday$$$123") {
+              sessionStorage.setItem(AUTH_KEY, "true");
+              setAuthed(true);
+              toast.success("Welcome to Newsroom");
             } else {
               toast.error("Incorrect password");
             }
+            setBusy(false);
           }}
         >
           <div>
@@ -130,22 +124,44 @@ function Admin() {
     );
   }
 
-  return <Newsroom onSignedOut={() => refetch()} />;
+  return (
+    <Newsroom
+      onSignedOut={() => {
+        sessionStorage.removeItem(AUTH_KEY);
+        setAuthed(false);
+      }}
+    />
+  );
 }
 
 function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
   const qc = useQueryClient();
-  const list = useServerFn(adminListAll);
-  const logout = useServerFn(adminLogout);
-  const upload = useServerFn(uploadImage);
-  const saveArticleFn = useServerFn(saveArticle);
-  const deleteArticleFn = useServerFn(deleteArticle);
-  const saveAdvertFn = useServerFn(saveAdvert);
-  const deleteAdvertFn = useServerFn(deleteAdvert);
-  const saveStatusFn = useServerFn(saveStatus);
-  const deleteStatusFn = useServerFn(deleteStatus);
 
-  const { data } = useQuery({ queryKey: ["admin-all"], queryFn: () => list({}) });
+  const { data } = useQuery({
+    queryKey: ["admin-all"],
+    queryFn: async () => {
+      const [articlesRes, advertsRes, statusesRes] = await Promise.all([
+        supabase
+          .from("articles")
+          .select("*")
+          .order("edition_date", { ascending: false })
+          .order("created_at", { ascending: false }),
+        supabase.from("adverts").select("*").order("created_at", { ascending: false }),
+        supabase.from("statuses").select("*").order("created_at", { ascending: false }),
+      ]);
+
+      if (articlesRes.error) throw articlesRes.error;
+      if (advertsRes.error) throw advertsRes.error;
+      if (statusesRes.error) throw statusesRes.error;
+
+      return {
+        articles: articlesRes.data ?? [],
+        adverts: advertsRes.data ?? [],
+        statuses: statusesRes.data ?? [],
+      };
+    },
+  });
+
   const [tab, setTab] = useState<"news" | "adverts" | "status">("news");
   const [form, setForm] = useState<ArticleForm>(emptyArticle());
   const [advert, setAdvert] = useState({
@@ -170,10 +186,14 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const base64 = await readFile(file);
-      return upload({
-        data: { filename: file.name, contentType: file.type || "image/jpeg", base64 },
-      });
+      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-60);
+      const path = `${Date.now()}-${cleanName}`;
+      const { error } = await supabase.storage
+        .from("media")
+        .upload(path, file, { contentType: file.type || "image/jpeg", upsert: false });
+      if (error) throw new Error(error.message);
+      const publicUrl = supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+      return publicUrl;
     },
   });
 
@@ -186,9 +206,9 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
         const file = el.files?.[0];
         if (!file) return resolve(null);
         try {
-          const res = await uploadMutation.mutateAsync(file);
+          const url = await uploadMutation.mutateAsync(file);
           toast.success("Image uploaded");
-          resolve(res.url);
+          resolve(url);
         } catch (err) {
           toast.error(err instanceof Error ? err.message : "Upload failed");
           resolve(null);
@@ -212,13 +232,7 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
             Newsroom
           </span>
         </p>
-        <button
-          className={btnGhost}
-          onClick={async () => {
-            await logout({});
-            onSignedOut();
-          }}
-        >
+        <button className={btnGhost} onClick={onSignedOut}>
           Sign out
         </button>
       </div>
@@ -327,7 +341,11 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
               </button>
               {form.image_url && (
                 <>
-                  <img src={form.image_url} alt="" className="h-12 w-20 object-cover" />
+                  <img
+                    src={resolveMediaUrl(form.image_url)}
+                    alt=""
+                    className="h-12 w-20 object-cover"
+                  />
                   <button
                     type="button"
                     className={btnGhost}
@@ -373,21 +391,33 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
                   return;
                 }
                 try {
-                  await saveArticleFn({
-                    data: {
-                      id: form.id,
-                      title: form.title,
-                      dek: form.dek,
-                      body: form.body,
-                      image_url: form.image_url,
-                      category: form.category,
-                      edition_date: form.edition_date,
-                      is_lead: form.is_lead,
-                      is_breaking: form.is_breaking,
-                      published: form.published,
-                      sources: form.sources.split("\n").map((s) => s.trim()),
-                    },
-                  });
+                  const payload = {
+                    title: form.title.trim(),
+                    dek: form.dek?.trim() || null,
+                    body: form.body,
+                    image_url: form.image_url || null,
+                    category: form.category,
+                    edition_date: form.edition_date,
+                    is_lead: form.is_lead,
+                    is_breaking: form.is_breaking,
+                    published: form.published,
+                    sources: form.sources.split("\n").map((s) => s.trim()).filter(Boolean),
+                  };
+
+                  if (form.id) {
+                    const { error } = await supabase
+                      .from("articles")
+                      .update(payload)
+                      .eq("id", form.id);
+                    if (error) throw new Error(error.message);
+                  } else {
+                    const { error } = await supabase.from("articles").insert({
+                      ...payload,
+                      slug: `${slugify(payload.title)}-${Date.now().toString(36).slice(-4)}`,
+                    });
+                    if (error) throw new Error(error.message);
+                  }
+
                   toast.success("Story saved");
                   setForm(emptyArticle());
                   refresh();
@@ -441,8 +471,15 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
                       className={btnGhost}
                       onClick={async () => {
                         if (!window.confirm("Delete this story?")) return;
-                        await deleteArticleFn({ data: { id: a.id } });
-                        refresh();
+                        const { error } = await supabase
+                          .from("articles")
+                          .delete()
+                          .eq("id", a.id);
+                        if (error) {
+                          toast.error(error.message);
+                        } else {
+                          refresh();
+                        }
                       }}
                     >
                       Delete
@@ -485,7 +522,13 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
             >
               Upload advert picture
             </button>
-            {advert.image_url && <img src={advert.image_url} alt="" className="h-12 w-20 object-cover" />}
+            {advert.image_url && (
+              <img
+                src={resolveMediaUrl(advert.image_url)}
+                alt=""
+                className="h-12 w-20 object-cover"
+              />
+            )}
             <label className="flex items-center gap-2 text-xs">
               <input
                 type="checkbox"
@@ -499,18 +542,23 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
             <button
               className={btn}
               onClick={async () => {
-                await saveAdvertFn({
-                  data: {
-                    id: advert.id,
-                    title: advert.title,
-                    image_url: advert.image_url,
-                    link_url: advert.link_url,
+                try {
+                  const payload = {
+                    title: advert.title?.trim() || null,
+                    image_url: advert.image_url || null,
+                    link_url: advert.link_url?.trim() || null,
                     active: advert.active,
-                  },
-                });
-                toast.success("Advert saved");
-                setAdvert({ id: null, title: "", image_url: "", link_url: "", active: true });
-                refresh();
+                  };
+                  const { error } = advert.id
+                    ? await supabase.from("adverts").update(payload).eq("id", advert.id)
+                    : await supabase.from("adverts").insert(payload);
+                  if (error) throw new Error(error.message);
+                  toast.success("Advert saved");
+                  setAdvert({ id: null, title: "", image_url: "", link_url: "", active: true });
+                  refresh();
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Could not save advert");
+                }
               }}
             >
               {advert.id ? "Update advert" : "Save advert"}
@@ -520,7 +568,13 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
             {adverts.map((a) => (
               <li key={a.id} className="flex items-center justify-between gap-3 py-3">
                 <div className="flex items-center gap-3">
-                  {a.image_url && <img src={a.image_url} alt="" className="h-10 w-16 object-cover" />}
+                  {a.image_url && (
+                    <img
+                      src={resolveMediaUrl(a.image_url)}
+                      alt=""
+                      className="h-10 w-16 object-cover"
+                    />
+                  )}
                   <p className="text-sm">
                     {a.title || "(picture advert)"}{" "}
                     <span className="text-[0.7rem] uppercase text-muted-foreground">
@@ -546,8 +600,12 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
                   <button
                     className={btnGhost}
                     onClick={async () => {
-                      await deleteAdvertFn({ data: { id: a.id } });
-                      refresh();
+                      const { error } = await supabase.from("adverts").delete().eq("id", a.id);
+                      if (error) {
+                        toast.error(error.message);
+                      } else {
+                        refresh();
+                      }
                     }}
                   >
                     Delete
@@ -585,16 +643,21 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
                 toast.error("Message is required");
                 return;
               }
-              await saveStatusFn({
-                data: {
-                  id: statusForm.id,
-                  message: statusForm.message,
+              try {
+                const payload = {
+                  message: statusForm.message.trim(),
                   active: statusForm.active,
-                },
-              });
-              toast.success("Status saved");
-              setStatusForm({ id: null, message: "", active: true });
-              refresh();
+                };
+                const { error } = statusForm.id
+                  ? await supabase.from("statuses").update(payload).eq("id", statusForm.id)
+                  : await supabase.from("statuses").insert(payload);
+                if (error) throw new Error(error.message);
+                toast.success("Status saved");
+                setStatusForm({ id: null, message: "", active: true });
+                refresh();
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Could not save status");
+              }
             }}
           >
             {statusForm.id ? "Update status" : "Add status"}
@@ -620,8 +683,12 @@ function Newsroom({ onSignedOut }: { onSignedOut: () => void }) {
                   <button
                     className={btnGhost}
                     onClick={async () => {
-                      await deleteStatusFn({ data: { id: s.id } });
-                      refresh();
+                      const { error } = await supabase.from("statuses").delete().eq("id", s.id);
+                      if (error) {
+                        toast.error(error.message);
+                      } else {
+                        refresh();
+                      }
                     }}
                   >
                     Delete

@@ -1,17 +1,9 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import tsconfigPaths from "vite-tsconfig-paths";
-import { fileURLToPath, URL } from "node:url";
+import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  plugins: [tailwindcss(), react(), tsconfigPaths()],
-  resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+  tanstackStart: {
+    server: {
+      entry: "server",
     },
-  },
-  build: {
-    outDir: "dist/client",
   },
 });
